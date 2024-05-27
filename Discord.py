@@ -2,13 +2,22 @@ import discord
 from Spells import Spells, SpellsEnum
 import asyncio
 import re
-
+import google.generativeai as genai
+import os
+from dotenv import load_dotenv
 
 class Discord(discord.Client):
     def __init__(self, *args, **kwargs):
         super(Discord, self).__init__(*args, **kwargs)
         self.__current_voice_channel = None
         self.__voice_channel_connection = None
+        
+        self.__already_answering = False
+        self.__current_chat = None
+
+        load_dotenv()
+        genai.configure(api_key=os.getenv("GEMINI_TOKEN"))
+        self.__model = genai.GenerativeModel('gemini-1.5-flash')
 
     def __disconnect(self):
         asyncio.run_coroutine_threadsafe(
@@ -28,6 +37,44 @@ class Discord(discord.Client):
         if message.author == self.user:
             return
         
+        lowercase_message = str.lower(message.content)
+        
+        """ comando de pergunta
+        a primeira pergunta comecara com o prefixo 'responda-me, '
+        exemplo de pergunta mínima: responda-me, oi!
+
+        se uma instancia do chat ja estiver aberta e o usuario mandar uma mensagem
+        com alguma pontuacao, o bot respondera
+        exemplo de pergunta seguinte: como vai voce?
+                                      nao entendi, reexplique!
+        """
+        if (
+            (lowercase_message[:13] == "responda-me, " and len(lowercase_message) > 16) \
+            or (self.__already_answering and lowercase_message[-1] in ["?", "!", ".", ","])
+        ):
+            author_message_channel = message.channel
+            if not self.__already_answering:
+                chat = self.__model.start_chat(history=[])
+
+                self.__already_answering = True
+                self.__current_chat = chat
+
+                response = chat.send_message(lowercase_message[13:])
+
+                await self.__send_message(author_message_channel.id, "Hmm...")
+                
+                response = self.__model.generate_content(lowercase_message[13:])
+                await self.__send_message(author_message_channel.id, response.text)
+            else:
+                if lowercase_message == "obrigado!" or lowercase_message == "agradeço!":
+                    await self.__send_message(author_message_channel.id, "Não há de quê")
+                    self.__already_answering = False
+                    self.__current_chat = None
+                else:
+                    response = self.__current_chat.send_message(lowercase_message)
+                    await self.__send_message(author_message_channel.id, response.text)
+
+        # comando de feitico
         if message.content[0] == ">":
             """
             exemplo de entradas:
