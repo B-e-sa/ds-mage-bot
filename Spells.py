@@ -21,24 +21,25 @@ class Spells():
     @staticmethod
     async def unpolymorph(member: discord.Member):
         await asyncio.sleep(5)
-        await member.edit(mute=False)
-        await member.edit(deafen=False)
-
+        await asyncio.gather(
+            member.edit(mute=False),
+            member.edit(deafen=False))
+        
     @staticmethod
     async def polymorph(
-        member_name: str,
-        voice_connection: discord.VoiceClient,
-        voice_channel: discord.VoiceChannel,
-        disconnect_function
+            member_name: str,
+            voice_connection: discord.VoiceClient,
+            voice_channel: discord.VoiceChannel,
+            disconnect_function
     ):
         voice_connection.play(
             discord.FFmpegPCMAudio(
                 f'./sounds/{SpellsEnum.POLIMORFE.value}.mp3'),
-            after=lambda x: disconnect_function()
-        )
+            after=lambda x: disconnect_function())
 
         for member in voice_channel.members:
             if str.lower(member.name) == member_name:
-                await member.edit(mute=True),
-                await member.edit(deafen=True)
+                await asyncio.gather(
+                    member.edit(mute=True),
+                    member.edit(deafen=True))
                 await Spells.unpolymorph(member)
