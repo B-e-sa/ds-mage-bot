@@ -8,7 +8,6 @@ class SpellsEnum(Enum):
     SILENCIO = "silencio"
     POLIMORFE = "polimorfe"
 
-
 class Spells():
     @staticmethod
     def combustion(voice_connection: discord.VoiceClient, disconnect_function):
