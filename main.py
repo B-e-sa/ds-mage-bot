@@ -1,6 +1,5 @@
-from Bot import Bot
-from Discord import Discord
+from ds_handler import DsHandler
+from channel_interactions.channel_interactions import ChannelInteractions
 
-BOT = Bot()
-DISCORD = Discord(intents=BOT.get_intents())
-DISCORD.run(BOT.get_token())
+DISCORD = DsHandler()
+DISCORD.run()

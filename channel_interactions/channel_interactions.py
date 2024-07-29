@@ -109,16 +109,16 @@ class ChannelInteractions():
 
                     success = False
                     if function == "vendere" or function == "ven":
-                        # try:
-                        price = message_content[3]
-                        self.db.create_venda(character,
-                                             message_author,
-                                             price)
-                        success = True
+                        try:
+                            price = int(message_content[3])
+                            self.db.create_venda(character,
+                                                message_author,
+                                                price)
+                            success = True
 
-                        # except IndexError:
-                        await ds_handler.get_channel(message.channel.id).send(
-                            "Preço necessário")
+                        except IndexError:
+                            await ds_handler.get_channel(message.channel.id).send(
+                                "Preço necessário")
 
                     elif function == "removere" or function == "rem":
                         self.db.delete_venda(character)
